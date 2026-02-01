@@ -2,7 +2,7 @@
 
 namespace MailContainerTest.Data
 {
-    public class MailContainerDataStore
+    public class MailContainerDataStore : IMailContainerDataStore
     {
         public MailContainer GetMailContainer(string mailContainerNumber)
         {   
@@ -14,6 +14,5 @@ namespace MailContainerTest.Data
         {
             // Update mail container in the database. Implementation not required for this exercise.
         }
-
     }
 }

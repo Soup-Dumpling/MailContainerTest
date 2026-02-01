@@ -1,92 +1,34 @@
-﻿using MailContainerTest.Data;
-using MailContainerTest.Types;
-using System.Configuration;
+﻿using MailContainerTest.Types;
 
 namespace MailContainerTest.Services
 {
     public class MailTransferService : IMailTransferService
     {
+        private readonly IDataStoreFactory _dataStoreFactory;
+        private readonly IMailValidationService _mailValidationService;
+
+        public MailTransferService(IDataStoreFactory dataStoreFactory, IMailValidationService mailValidationService)
+        {
+            _dataStoreFactory = dataStoreFactory;
+            _mailValidationService = mailValidationService;
+        }
+
         public MakeMailTransferResult MakeMailTransfer(MakeMailTransferRequest request)
         {
-            var dataStoreType = ConfigurationManager.AppSettings["DataStoreType"];
+            var dataStore = _dataStoreFactory.CreateDataStore();
+            var sourceMailContainer = dataStore.GetMailContainer(request.SourceMailContainerNumber);
+            var destinationMailContainer = dataStore.GetMailContainer(request.DestinationMailContainerNumber);
 
-            MailContainer mailContainer = null;
+            var result = new MakeMailTransferResult() { Success = false };
 
-            if (dataStoreType == "Backup")
+            if (_mailValidationService.IsMailTransferValid(sourceMailContainer, destinationMailContainer, request))
             {
-                var mailContainerDataStore = new BackupMailContainerDataStore();
-                mailContainer = mailContainerDataStore.GetMailContainer(request.SourceMailContainerNumber);
-
-            } else
-            {
-                var mailContainerDataStore = new MailContainerDataStore();
-                mailContainer = mailContainerDataStore.GetMailContainer(request.SourceMailContainerNumber);
+                sourceMailContainer.Capacity -= request.NumberOfMailItems;
+                dataStore.UpdateMailContainer(sourceMailContainer);
+                destinationMailContainer.Capacity += request.NumberOfMailItems;
+                dataStore.UpdateMailContainer(destinationMailContainer);
+                result.Success = true;
             }
-
-            var result = new MakeMailTransferResult();
-
-            switch (request.MailType)
-            {
-                case MailType.StandardLetter:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.StandardLetter))
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case MailType.LargeLetter:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.LargeLetter))
-                    {
-                        result.Success = false;
-                    }
-                    else if (mailContainer.Capacity < request.NumberOfMailItems)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case MailType.SmallParcel:
-                    if (mailContainer == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!mailContainer.AllowedMailType.HasFlag(AllowedMailType.SmallParcel))
-                    {
-                        result.Success = false;
-
-                    }
-                    else if (mailContainer.Status != MailContainerStatus.Operational)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-            }
-
-            if (result.Success)
-            {
-                mailContainer.Capacity -= request.NumberOfMailItems;
-
-                if (dataStoreType == "Backup")
-                {
-                    var mailContainerDataStore = new BackupMailContainerDataStore();
-                    mailContainerDataStore.UpdateMailContainer(mailContainer);
-
-                }
-                else
-                {
-                    var mailContainerDataStore = new MailContainerDataStore();
-                    mailContainerDataStore.UpdateMailContainer(mailContainer);
-                }
-            }
-
             return result;
         }
     }
