@@ -16,7 +16,7 @@ namespace MailContainerTest.Services
                 return false;
             }
 
-            /* Valid Source Mail Container and DestinationMailContainer
+            /* Valid Source Mail Container and Destination Mail Container
              * - Both source mail container and destination mail container exist, i.e. both are not null
              * - Edge case: Ensure that the source mail container and the destination mail container are not the same container
              * - The source mail container has mail capacity equal to or greater than the number of mail items needed to be transferred in the MakeMailTransferRequest

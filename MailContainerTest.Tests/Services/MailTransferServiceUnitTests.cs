@@ -1,4 +1,5 @@
-﻿using MailContainerTest.Data;
+﻿using FluentAssertions;
+using MailContainerTest.Data;
 using MailContainerTest.Services;
 using MailContainerTest.Types;
 using NSubstitute;
@@ -58,7 +59,7 @@ namespace MailContainerTest.Tests.Services
             var result = mailTransferService.MakeMailTransfer(request);
 
             // Assert
-            Assert.True(result.Success);
+            result.Success.Should().BeTrue();
             dataStoreFactoryMock.Received().CreateDataStore();
             dataStoreMock.Received().GetMailContainer(request.SourceMailContainerNumber);
             dataStoreMock.Received().GetMailContainer(request.DestinationMailContainerNumber);
@@ -67,8 +68,8 @@ namespace MailContainerTest.Tests.Services
                 request);
             dataStoreMock.Received().UpdateMailContainer(sourceMailContainer);
             dataStoreMock.Received().UpdateMailContainer(destinationMailContainer);
-            Assert.Equal(sourceMailContainerInitialCapacity - request.NumberOfMailItems, sourceMailContainer.Capacity);
-            Assert.Equal(destinationMailContainerInitialCapacity + request.NumberOfMailItems, destinationMailContainer.Capacity);
+            sourceMailContainer.Capacity.Should().Be(sourceMailContainerInitialCapacity - request.NumberOfMailItems);
+            destinationMailContainer.Capacity.Should().Be(destinationMailContainerInitialCapacity + request.NumberOfMailItems);
         }
 
         [Fact]
@@ -112,7 +113,7 @@ namespace MailContainerTest.Tests.Services
             var result = mailTransferService.MakeMailTransfer(request);
 
             // Assert
-            Assert.False(result.Success);
+            result.Success.Should().BeFalse();
             dataStoreFactoryMock.Received().CreateDataStore();
             dataStoreMock.Received().GetMailContainer(request.SourceMailContainerNumber);
             dataStoreMock.Received().GetMailContainer(request.DestinationMailContainerNumber);
@@ -121,8 +122,8 @@ namespace MailContainerTest.Tests.Services
                 request);
             dataStoreMock.DidNotReceive().UpdateMailContainer(sourceMailContainer);
             dataStoreMock.DidNotReceive().UpdateMailContainer(destinationMailContainer);
-            Assert.Equal(sourceMailContainerInitialCapacity, sourceMailContainer.Capacity);
-            Assert.Equal(destinationMailContainerInitialCapacity, destinationMailContainer.Capacity);
+            sourceMailContainer.Capacity.Should().Be(sourceMailContainerInitialCapacity);
+            destinationMailContainer.Capacity.Should().Be(destinationMailContainerInitialCapacity);
         }
     }
 }

@@ -4,9 +4,14 @@ using MailContainerTest.Types;
 
 namespace MailContainerTest.Services
 {
-    public class DataStoreFactory(DataStoreOptions options) : IDataStoreFactory
+    public class DataStoreFactory : IDataStoreFactory
     {
-        private readonly DataStoreOptions _options = options;
+        private readonly DataStoreOptions _options;
+
+        public DataStoreFactory(DataStoreOptions options)
+        {
+            _options = options;
+        }
 
         public IMailContainerDataStore CreateDataStore()
         {
